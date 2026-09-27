@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import DagSection from "@/sections/DagSection";
 import RouterSection from "@/sections/RouterSection";
+import JsonLd from "@/components/JsonLd";
 import { projects, site } from "@/content/site";
+import { breadcrumbSchema, caseStudySchema } from "@/lib/schema";
 
 /** Pre-render every case study at build time. */
 export function generateStaticParams() {
@@ -43,6 +45,16 @@ export default async function CaseStudy({ params }: { params: Promise<{ slug: st
 
   return (
     <article className="pt-[var(--header-h)]">
+      {/* The case study itself, and where it sits in the site. */}
+      <JsonLd data={caseStudySchema(project)} />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: "Home", path: "/" },
+          { name: "Work", path: "/work" },
+          { name: project.title, path: `/work/${project.slug}` },
+        ])}
+      />
+
       {/* Masthead */}
       <header className="grid-paper border-b-[2.5px] border-ink bg-paper pb-14 pt-12">
         <div className="mx-auto max-w-4xl px-5 sm:px-8">

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import About from "@/sections/About";
+import { PageSchema } from "@/components/JsonLd";
 import { pages } from "@/content/site";
 
 export const metadata: Metadata = {
@@ -10,5 +11,12 @@ export const metadata: Metadata = {
 
 /** About, capabilities, and what is in progress — one subject, one page. */
 export default function AboutPage() {
-  return <About headingLevel="h1" />;
+  const page = pages.about;
+
+  return (
+    <>
+      <PageSchema path={page.path} title={page.title} description={page.description} />
+      <About headingLevel="h1" />
+    </>
+  );
 }

@@ -94,7 +94,7 @@ pnpm start
 pnpm lint
 ```
 
-There is **no environment configuration required** — the app reads no environment variables.
+There is **no environment configuration required**: the app builds and runs with none. One optional pair turns the contact form's delivery on — `RESEND_API_KEY` and `CONTACT_FROM` (`CONTACT_TO` defaults to the address in `site.ts`). Without them the form keeps its honest `unconfigured` behaviour rather than pretending to send.
 
 ### Project scripts
 
@@ -281,8 +281,9 @@ Every text size is `clamp()`-based and tuned so nothing overflows at 320 px wide
 ### Textures and utilities
 
 - `.grid-paper` / `.grid-void` — the blueprint grid, light and dark variants.
-- `.scanlines` — a hard scanline overlay for void sections.
-- `.brut` — the bordered, hard-shadow panel primitive.
+- `.scanlines` — a hard scanline overlay for void sections; used on the 404, which is the site's one genuine absence.
+- `.brut` / `.brut-sm` / `.brut-lg` — the bordered, hard-shadow panel primitive, in three weights.
+- `.page-top` — clears the fixed header on the first block of a page that is not the hero, from the same `--header-h` token the anchor offsets use.
 - `.reveal-line` / `.reveal-inner` / `.fade-up` — reveal primitives that **work without JavaScript** (the settled state is the default; `data-revealed="true"` is what animates them in).
 - `@utility text-balance`, `text-pretty`, `rule-brut`, `rule-brut-void`, `over-scene`.
 
@@ -328,12 +329,7 @@ The form is a **React 19 server action** (`useActionState` + `useFormStatus`), a
 
 **Spam:** a honeypot field (`company`) is positioned off-screen and hidden from assistive tech. If it is filled, the action returns a successful response — so bots learn nothing — but sends nothing.
 
-**Failure states are honest.** The action returns one of five explicit statuses: `idle`, `ok`, `invalid`, `error`, `unconfigured`. In this build, delivery is not wired to a provider, so a valid submission returns **`unconfigured`** — the form says "Form not connected yet" and points the visitor at direct email instead of faking a success. To enable real delivery, replace the final `return { status: "unconfigured", errors: {} }` in `src/sections/Contact.tsx` with a provider call and only return `{ status: "ok", errors: {} }` once it actually succeeds:
-
-```ts
-await resend.emails.send({ from, to, replyTo: email, subject, text: message });
-return { status: "ok", errors: {} };
-```
+**Failure states are honest.** The action returns one of five explicit statuses: `idle`, `ok`, `invalid`, `error`, `unconfigured`. Delivery is **optional by design**: with no provider configured, a valid submission returns **`unconfigured`**, and the form says "Form not connected yet" and points the visitor at direct email rather than faking a success. Set `RESEND_API_KEY` and `CONTACT_FROM` and the same action POSTs to Resend with `fetch` — no SDK — and returns `ok` only once the provider has accepted the message. A non-2xx response, or a network failure, returns `error`; nothing is reported as sent that was not sent.
 
 **Keyboard and screen-reader behaviour:** an invalid submission renders a `role="alert"` summary, moves focus to it, and each error links to its field via `#field`. Inputs carry `aria-invalid` and `aria-describedby`, and the submit button disables itself while `pending`.
 
@@ -369,6 +365,9 @@ return { status: "ok", errors: {} };
 - Full `Metadata` in `app/layout.tsx`: title template, canonical URL, Open Graph, Twitter card, keywords, authors, `robots` with `max-image-preview: large`, and a `category`.
 - **JSON-LD** `@graph` with a `Person` node (job title, `sameAs` GitHub, `knowsAbout`, country address) and a `WebSite` node referencing it by `@id`. Built only from facts present in the content — no ratings, no invented awards.
 - Per-case-study `generateMetadata` with its own canonical and article-type Open Graph tags, and a per-spoke-page canonical + description read from the same `pages` object the page renders.
+- **Generated images, not hand-drawn files.** `app/icon.tsx` (favicon), `app/apple-icon.tsx`, `app/opengraph-image.tsx`, `app/twitter-image.tsx`, and a per-case-study card under `app/(site)/work/[slug]/`. All of them render through one function (`lib/og.tsx`) against one palette (`lib/brand.ts`), so the mark cannot drift into four slightly different brands. The cards use the renderer's built-in font deliberately: loading the display face would add a network fetch to every build for an image most visitors never see. The Agent-X card leads with its measured numbers.
+- **Per-page JSON-LD.** The root layout emits `Person` and `WebSite` with stable `@id`s; every spoke page adds a `WebPage` and a `BreadcrumbList`, and each case study adds a `CreativeWork` (`lib/schema.ts`). Every field is a fact the page already prints.
+- **One remote image, explicitly allow-listed.** The portrait goes through `next/image` with `avatars.githubusercontent.com` named in `next.config.ts`; no wildcard, no layout shift (intrinsic `width`/`height`).
 - `robots.ts` and `sitemap.ts` are generated: the sitemap carries the hub at priority `1`, every spoke page at `0.9`, and every case study at `0.8` — derived from `pages` and `projects` rather than hand-maintained, and the robots file derives its sitemap URL from `site.url`.
 - `viewport` sets `viewportFit: "cover"` and a light/dark `themeColor` pair so mobile browser chrome matches the page.
 
@@ -421,11 +420,12 @@ Then point the `itsmesujan.me` domain at the deployment and confirm the URLs in 
 
 Listed honestly, because the site's whole premise is that nothing is claimed that isn't true:
 
-- **Contact delivery is not wired to a mail provider.** Validation and spam handling are real; delivery is not. A valid message returns `unconfigured` and the UI says so. See [Contact form](#contact-form).
+- **Contact delivery needs two environment variables.** Validation and spam handling are real, and the sending path is real — but it stays switched off until `RESEND_API_KEY` and `CONTACT_FROM` are set, and the form says so instead of pretending. See [Contact form](#contact-form).
+- **This site's own case study lists `Next.js 16` in its tech stack** while the repository builds on `15.5.x`. The string is the author's own content in `site.ts`; correcting it is a content decision, deliberately not made silently here.
 - **No test suite is committed.** The methodology describes Playwright audits (overflow, tap targets, console errors, menu interaction at 320–1920 px) run against production builds; those live outside this repository.
 - **Bloom is not implemented, and is no longer budgeted.** `TIER_BUDGET` carries only values something actually renders; a post-processing pass would add its budget back alongside the pass itself.
 - **No ESLint config is committed**, so `pnpm lint` needs one before it will run cleanly.
-- **The `void` scanline treatment and `grid-void` grid are defined** but used sparingly — the shipped page is predominantly on paper.
+- **The `void` treatment is used on exactly one page.** `grid-void` and `.scanlines` ship on the 404 — a 404 is the site's one genuine absence. Every other surface is on paper, deliberately.
 
 ---
 

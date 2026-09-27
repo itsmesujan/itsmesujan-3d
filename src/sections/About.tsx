@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { about, capabilities, now, timeline, site } from "@/content/site";
 import { useReveal } from "@/lib/useClock";
 
@@ -51,13 +52,11 @@ export default function About({ headingLevel = "h2" }: Props) {
             <div className="space-y-8">
               {/* Portrait */}
               <div className="brut bg-paper p-5 sm:p-6">
-                <img
+                <Image
                   src={site.avatar}
                   alt={`Portrait of ${site.name}`}
                   width={96}
                   height={96}
-                  loading="lazy"
-                  decoding="async"
                   className="h-24 w-24 border-[2.5px] border-ink"
                 />
                 <p className="mt-4 font-mono text-[0.72rem] uppercase tracking-[0.1em] text-ink/55">

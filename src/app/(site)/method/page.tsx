@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import FleetSection from "@/sections/FleetSection";
+import { PageSchema } from "@/components/JsonLd";
 import { pages } from "@/content/site";
 
 export const metadata: Metadata = {
@@ -14,5 +15,12 @@ export const metadata: Metadata = {
  * the loop.
  */
 export default function MethodPage() {
-  return <FleetSection headingLevel="h1" />;
+  const page = pages.method;
+
+  return (
+    <>
+      <PageSchema path={page.path} title={page.title} description={page.description} />
+      <FleetSection headingLevel="h1" />
+    </>
+  );
 }

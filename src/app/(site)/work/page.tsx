@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Work from "@/sections/Work";
+import { PageSchema } from "@/components/JsonLd";
 import { pages } from "@/content/site";
 
 export const metadata: Metadata = {
@@ -16,5 +17,12 @@ export const metadata: Metadata = {
  * carries more than the preview rather than the same thing twice.
  */
 export default function WorkPage() {
-  return <Work headingLevel="h1" detailed />;
+  const page = pages.work;
+
+  return (
+    <>
+      <PageSchema path={page.path} title={page.title} description={page.description} />
+      <Work headingLevel="h1" detailed />
+    </>
+  );
 }

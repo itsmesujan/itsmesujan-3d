@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, JetBrains_Mono, Inter } from "next/font/google";
 import { site } from "@/content/site";
+import { PERSON_ID, WEBSITE_ID } from "@/lib/schema";
 import "./globals.css";
 
 const archivo = Archivo({
@@ -83,7 +84,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const personSchema = {
     "@context": "https://schema.org",
     "@type": "Person",
-    "@id": `${site.url}/#person`,
+    "@id": PERSON_ID,
     name: site.name,
     alternateName: site.handle,
     url: site.url,
@@ -110,10 +111,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const siteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    // Referenced by the per-page schema as a bare @id.
+    "@id": WEBSITE_ID,
     name: site.name,
     url: site.url,
     inLanguage: "en",
-    author: { "@id": `${site.url}/#person` },
+    author: { "@id": PERSON_ID },
   };
 
   return (

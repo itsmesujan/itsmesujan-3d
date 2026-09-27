@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Contact from "@/sections/Contact";
+import { PageSchema } from "@/components/JsonLd";
 import { pages } from "@/content/site";
 
 export const metadata: Metadata = {
@@ -10,5 +11,12 @@ export const metadata: Metadata = {
 
 /** The action beat, with the validation rules that actually run on the server. */
 export default function ContactPage() {
-  return <Contact headingLevel="h1" />;
+  const page = pages.contact;
+
+  return (
+    <>
+      <PageSchema path={page.path} title={page.title} description={page.description} />
+      <Contact headingLevel="h1" />
+    </>
+  );
 }

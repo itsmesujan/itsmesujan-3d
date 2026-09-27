@@ -46,16 +46,40 @@ async function submit(_prev: ContactState, formData: FormData): Promise<ContactS
   /*
    * Delivery.
    *
-   * No mail provider is configured in this build, so we say exactly that
-   * rather than pretending a message was sent.
-   *
-   * To enable real delivery, replace this return with a provider call and
-   * only return { status: "ok" } once it has actually succeeded:
-   *
-   *   await resend.emails.send({ from, to, replyTo: email, subject, text: message });
-   *   return { status: "ok", errors: {} };
+   * Optional, because this site must build and run with no configuration at
+   * all: with no provider configured we say exactly that rather than pretend a
+   * message was sent. Set `RESEND_API_KEY` and `CONTACT_FROM` to turn delivery
+   * on, and only then is a message reported as sent — when the provider has
+   * actually accepted it.
    */
-  return { status: "unconfigured", errors: {} };
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.CONTACT_FROM;
+
+  if (!apiKey || !from) return { status: "unconfigured", errors: {} };
+
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        to: process.env.CONTACT_TO ?? site.email,
+        reply_to: email,
+        subject: `${subject} — ${name}`,
+        text: `${message}\n\n— ${name} <${email}>`,
+      }),
+    });
+
+    if (!res.ok) return { status: "error", errors: {} };
+  } catch {
+    // A network failure is a failure, not a silent success.
+    return { status: "error", errors: {} };
+  }
+
+  return { status: "ok", errors: {} };
 }
 
 type Props = {
