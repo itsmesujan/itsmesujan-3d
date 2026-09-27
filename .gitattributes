@@ -1,0 +1,32 @@
+# Normalize line endings: LF in the repository and in the working copy.
+# Source files here are LF-authored, so pinning LF prevents whole-file diff
+# churn when the repo is cloned on Windows.
+* text=auto eol=lf
+
+# Windows-only scripts must keep CRLF to run.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets — never touched, never diffed.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.glb binary
+*.gltf binary
+*.mp4 binary
+*.webm binary
+*.pdf binary
+
+# Lockfiles are generated; keep them out of language statistics and diffs.
+pnpm-lock.yaml -diff linguist-generated
+package-lock.json -diff linguist-generated
+yarn.lock -diff linguist-generated

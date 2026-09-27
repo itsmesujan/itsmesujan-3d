@@ -1,0 +1,369 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   DESIGN TOKENS — neo-brutalist edge + high-tech 3D layer
+   The paper is the interface. The void behind it is where the agents run.
+   ========================================================================== */
+
+@theme {
+  /* Surfaces */
+  --color-paper: #f4f1ea;
+  --color-paper-dim: #e8e4d9;
+  --color-ink: #0a0a0a;
+  --color-ink-soft: #1c1c1c;
+  --color-void: #050506;
+
+  /* Signal — one accent, used sparingly so it always means something */
+  --color-signal: #ff4d1c;
+  --color-signal-deep: #d93a0d;
+  --color-verify: #00e07a;
+  --color-fail: #ff2d55;
+
+  /* Type */
+  --font-display: var(--font-archivo), "Arial Black", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), "SF Mono", ui-monospace, monospace;
+  --font-body: var(--font-inter), system-ui, -apple-system, sans-serif;
+
+  /* Neo-brutalist structure */
+  --border-brut: 2.5px;
+  --radius-brut: 0px;
+
+  /* Motion — all durations live here, never inline */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+/* ============================================================================
+   BASE
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  /* Neo-brutalist hard edges: nothing rounds by accident */
+  scrollbar-color: var(--color-ink) var(--color-paper);
+}
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Lock scroll while the mobile menu owns the viewport */
+body[data-menu-open="true"] {
+  overflow: hidden;
+}
+
+::selection {
+  background: var(--color-signal);
+  color: var(--color-paper);
+}
+
+/* Visible, unmissable focus — never removed, only restyled */
+:focus-visible {
+  outline: 3px solid var(--color-signal);
+  outline-offset: 3px;
+}
+
+.on-void :focus-visible {
+  outline-color: var(--color-verify);
+}
+
+/* ============================================================================
+   TYPE SCALE — fluid, clamped so nothing overflows at 320px
+   ========================================================================== */
+
+.t-display {
+  font-family: var(--font-display);
+  font-weight: 900;
+  line-height: 0.88;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  font-size: clamp(2.75rem, 13vw, 11rem);
+}
+
+.t-section {
+  font-family: var(--font-display);
+  font-weight: 900;
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  font-size: clamp(2rem, 7vw, 4.5rem);
+}
+
+.t-card {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  font-size: clamp(1.35rem, 3.2vw, 2.1rem);
+}
+
+.t-mono {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.t-body-lg {
+  font-size: clamp(1.05rem, 2.1vw, 1.35rem);
+  line-height: 1.5;
+}
+
+.t-measure {
+  max-width: 62ch;
+}
+
+/* ============================================================================
+   BRUTALIST COMPONENT PRIMITIVES
+   ========================================================================== */
+
+@layer components {
+  /* Hard border + hard offset shadow. The signature. */
+  .brut {
+    border: var(--border-brut) solid var(--color-ink);
+    box-shadow: 6px 6px 0 0 var(--color-ink);
+  }
+
+  .brut-sm {
+    border: var(--border-brut) solid var(--color-ink);
+    box-shadow: 4px 4px 0 0 var(--color-ink);
+  }
+
+  .brut-void {
+    border: var(--border-brut) solid var(--color-paper);
+    box-shadow: 6px 6px 0 0 rgba(244, 241, 234, 0.9);
+  }
+
+  .brut-signal {
+    border: var(--border-brut) solid var(--color-ink);
+    box-shadow: 6px 6px 0 0 var(--color-signal);
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    padding: 0.9rem 1.6rem;
+    border: var(--border-brut) solid var(--color-ink);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 5px 5px 0 0 var(--color-ink);
+    transition:
+      transform 0.14s var(--ease-out-expo),
+      box-shadow 0.14s var(--ease-out-expo),
+      background-color 0.14s var(--ease-out-expo),
+      color 0.14s var(--ease-out-expo);
+    /* Comfortable touch target on mobile */
+    min-height: 48px;
+  }
+
+  .btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 7px 7px 0 0 var(--color-ink);
+  }
+
+  .btn:active {
+    transform: translate(3px, 3px);
+    box-shadow: 0 0 0 0 var(--color-ink);
+  }
+
+  .btn-primary {
+    background: var(--color-signal);
+    color: var(--color-paper);
+  }
+
+  .btn-primary:hover {
+    background: var(--color-signal-deep);
+  }
+
+  .btn-ghost {
+    background: transparent;
+  }
+
+  .btn-void {
+    background: var(--color-paper);
+    color: var(--color-ink);
+  }
+
+  /* Tag / chip */
+  .chip {
+    display: inline-block;
+    padding: 0.3rem 0.65rem;
+    border: 2px solid currentColor;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .chip-signal {
+    background: var(--color-signal);
+    border-color: var(--color-signal);
+    color: var(--color-paper);
+  }
+
+  .chip-ink {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: var(--color-paper);
+  }
+
+  /* Grid paper texture for the light sections */
+  .grid-paper {
+    background-image:
+      linear-gradient(to right, rgba(10, 10, 10, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(10, 10, 10, 0.07) 1px, transparent 1px);
+    background-size: 34px 34px;
+  }
+
+  .grid-void {
+    background-image:
+      linear-gradient(to right, rgba(244, 241, 234, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(244, 241, 234, 0.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+
+  /* Hard scanline overlay for void sections */
+  .scanlines::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0 2px,
+      rgba(0, 0, 0, 0.22) 2px 4px
+    );
+    opacity: 0.5;
+    z-index: 2;
+  }
+}
+
+/* ============================================================================
+   UTILITIES
+   ========================================================================== */
+
+@utility text-balance {
+  text-wrap: balance;
+}
+
+@utility text-pretty {
+  text-wrap: pretty;
+}
+
+/* Horizontal rule with the brutalist notch */
+@utility rule-brut {
+  border-top: var(--border-brut) solid var(--color-ink);
+}
+
+@utility rule-brut-void {
+  border-top: var(--border-brut) solid rgba(244, 241, 234, 0.25);
+}
+
+/* Text that sits on top of a 3D scene and must stay readable */
+@utility over-scene {
+  position: relative;
+  z-index: 10;
+}
+
+/* Reveal primitives — enhanced by JS, visible without it */
+@utility reveal-line {
+  display: block;
+  overflow: hidden;
+}
+
+@utility reveal-inner {
+  display: block;
+  transform: translateY(105%);
+  transition: transform 0.9s var(--ease-out-expo);
+}
+
+[data-revealed="true"] .reveal-inner {
+  transform: translateY(0);
+}
+
+@utility fade-up {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.7s var(--ease-out-expo),
+    transform 0.7s var(--ease-out-expo);
+}
+
+[data-revealed="true"].fade-up,
+[data-revealed="true"] .fade-up {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================================================
+   REDUCED MOTION
+   Remove pinning, parallax, loops, and smooth scroll — not just durations.
+   The settled state must be the complete state.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reveal-inner {
+    transform: none !important;
+  }
+
+  .fade-up {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ============================================================================
+   PRINT — the fallback that always works
+   ========================================================================== */
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+}
