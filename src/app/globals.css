@@ -28,6 +28,9 @@
   --border-brut: 2.5px;
   --radius-brut: 0px;
 
+  /* Fixed header height — anchor offsets keep jump targets clear of it */
+  --header-h: 5.5rem;
+
   /* Motion — all durations live here, never inline */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
@@ -46,6 +49,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  /* Jump targets land below the fixed header instead of underneath it */
+  scroll-padding-top: var(--header-h);
   /* Neo-brutalist hard edges: nothing rounds by accident */
   scrollbar-color: var(--color-ink) var(--color-paper);
 }
@@ -143,6 +148,12 @@ body[data-menu-open="true"] {
   .brut-sm {
     border: var(--border-brut) solid var(--color-ink);
     box-shadow: 4px 4px 0 0 var(--color-ink);
+  }
+
+  /* The heavier offset, for the one card per section that should dominate */
+  .brut-lg {
+    border: var(--border-brut) solid var(--color-ink);
+    box-shadow: 8px 8px 0 0 var(--color-ink);
   }
 
   .brut-void {

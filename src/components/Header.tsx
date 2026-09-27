@@ -1,19 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { site } from "@/content/site";
-
-const NAV = [
-  { href: "#work", label: "Work" },
-  { href: "#method", label: "Method" },
-  { href: "#about", label: "About" },
-  { href: "#capabilities", label: "Capabilities" },
-  { href: "#contact", label: "Contact" },
-] as const;
+import Link from "next/link";
+import { nav, site } from "@/content/site";
+import { useNavHref } from "@/lib/useNavHref";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
   const [solid, setSolid] = useState(false);
+  // Hash targets are native in-page anchors here, and real navigations home
+  // from any other route. One source, resolved for wherever we are.
+  const resolveHref = useNavHref();
 
   // Lock body scroll while the mobile sheet owns the viewport.
   useEffect(() => {
@@ -48,8 +45,8 @@ export default function Header() {
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3.5 sm:px-8">
-        <a
-          href="#top"
+        <Link
+          href={resolveHref("#top")}
           className="flex items-center gap-2.5 font-mono text-[0.8rem] font-bold uppercase tracking-[0.1em] no-underline"
         >
           <span
@@ -57,19 +54,19 @@ export default function Header() {
             className="inline-block h-3.5 w-3.5 bg-signal"
           />
           {site.handle}
-        </a>
+        </Link>
 
         {/* Desktop nav */}
         <nav aria-label="Primary" className="hidden md:block">
           <ul className="flex items-center gap-1">
-            {NAV.map((item) => (
+            {nav.map((item) => (
               <li key={item.href}>
-                <a
-                  href={item.href}
+                <Link
+                  href={resolveHref(item.href)}
                   className="inline-flex items-center px-3 py-2.5 font-mono text-[0.72rem] font-semibold uppercase tracking-[0.1em] no-underline transition-colors hover:bg-ink hover:text-paper"
                 >
                   {item.label}
-                </a>
+                </Link>
               </li>
             ))}
             <li className="ml-2">
@@ -121,15 +118,15 @@ export default function Header() {
         >
           <nav aria-label="Primary mobile" className="px-5 py-3">
             <ul>
-              {NAV.map((item) => (
+              {nav.map((item) => (
                 <li key={item.href} className="border-b border-ink/15 last:border-b-0">
-                  <a
-                    href={item.href}
+                  <Link
+                    href={resolveHref(item.href)}
                     onClick={() => setOpen(false)}
                     className="block py-4 font-display text-2xl font-black uppercase tracking-tight no-underline"
                   >
                     {item.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

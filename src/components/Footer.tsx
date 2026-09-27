@@ -1,16 +1,15 @@
-import { site } from "@/content/site";
+"use client";
 
-const NAV = [
-  { href: "#work", label: "Work" },
-  { href: "#method", label: "Method" },
-  { href: "#about", label: "About" },
-  { href: "#capabilities", label: "Capabilities" },
-  { href: "#contact", label: "Contact" },
-] as const;
+import Link from "next/link";
+import { nav, site } from "@/content/site";
+import { useNavHref } from "@/lib/useNavHref";
 
 const YEAR = new Date().getFullYear();
 
 export default function Footer() {
+  // Same resolution as the header: hash targets work from every route.
+  const resolveHref = useNavHref();
+
   return (
     <footer className="no-print border-t-[2.5px] border-ink bg-ink text-paper">
       <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8">
@@ -37,14 +36,14 @@ export default function Footer() {
               Navigate
             </h2>
             <ul className="mt-4 space-y-2.5">
-              {NAV.map((item) => (
+              {nav.map((item) => (
                 <li key={item.href}>
-                  <a
-                    href={item.href}
+                  <Link
+                    href={resolveHref(item.href)}
                     className="inline-flex items-center py-2 font-mono text-[0.8rem] uppercase tracking-[0.06em] text-paper/85 no-underline transition-colors hover:text-signal"
                   >
                     {item.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

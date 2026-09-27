@@ -17,6 +17,7 @@ export default function FleetSection() {
 
   return (
     <SceneHost
+      id="method"
       label="The agent fleet resolving into the six-stage build loop"
       poster={poster}
       minHeight="min-h-[240vh]"
@@ -49,10 +50,7 @@ export default function FleetSection() {
           </div>
 
           {/* The six stages, revealed in sync with the resolve. */}
-          <ol
-            className="brut bg-paper/92 p-5 backdrop-blur-sm sm:p-6"
-            style={{ boxShadow: "8px 8px 0 0 var(--color-ink)" }}
-          >
+          <ol className="brut-lg bg-paper/92 p-5 backdrop-blur-sm sm:p-6">
             {loopSteps.map((s, i) => {
               // Each stage lights as the ring reaches it.
               const stageProgress = Math.min(

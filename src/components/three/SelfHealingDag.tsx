@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { verificationLevels } from "@/content/site";
 
 /**
  * SCENE 2 — THE SELF-HEALING DAG
@@ -19,7 +18,6 @@ import { verificationLevels } from "@/content/site";
  * paragraph can.
  */
 
-const PAPER = "#f4f1ea";
 const INK = "#0a0a0a";
 const SIGNAL = "#ff4d1c";
 const VERIFY = "#00e07a";
@@ -34,6 +32,12 @@ type DagProps = {
   pointer: { x: number; y: number };
   /** How many graph nodes to draw — capped by tier. */
   nodeBudget: number;
+  /**
+   * Start, or re-start, the fault sequence. The parent owns the state: `true`
+   * plays failure → severance → recovery from t=0; `false` returns the graph
+   * to healthy.
+   */
+  initialFault?: boolean;
 };
 
 type GraphNode = {
@@ -50,10 +54,21 @@ export function SelfHealingDag({
   allowTilt,
   pointer,
   nodeBudget,
+  initialFault = false,
 }: DagProps) {
-  const [faultInjected, setFaultInjected] = useState(false);
+  const [faultInjected, setFaultInjected] = useState(initialFault);
   const groupRef = useRef<THREE.Group>(null);
   const faultTime = useRef<number | null>(null);
+
+  /*
+   * The parent drives the interaction. Re-injecting replays the sequence from
+   * t=0 without requiring a remount, and clearing it returns the graph to
+   * healthy — the state is a prop here, not a hidden internal toggle.
+   */
+  useEffect(() => {
+    setFaultInjected(initialFault);
+    faultTime.current = null;
+  }, [initialFault]);
 
   // Nodes are laid out in layers left→right, the way a scheduler reads.
   const nodes = useMemo<GraphNode[]>(() => {
@@ -71,7 +86,9 @@ export function SelfHealingDag({
       { id: "ship", base: new THREE.Vector3(3.5, 0.4, 0), size: 0.32, isRoot: true },
       { id: "world", base: new THREE.Vector3(1.9, -1.5, 0), size: 0.18, isRoot: false },
     ];
-    return layout.slice(0, Math.max(7, nodeBudget));
+    // The core path (mission → … → verify) survives every budget, so the fault
+    // and its recovery are always demonstrable.
+    return layout.slice(0, Math.min(layout.length, Math.max(7, nodeBudget)));
   }, [nodeBudget]);
 
   const index = useMemo(() => {
@@ -133,13 +150,17 @@ export function SelfHealingDag({
     const made = edges.map(([a, b]) => make(nodes[a].base, nodes[b].base, 0, 0x0a0a0a));
 
     // The detour around the dead node: the proof the graph repairs itself.
-    const plan = index.get("plan") ?? 2;
-    const meter = index.get("meter") ?? 5;
-    const drift = index.get("drift") ?? 9;
-    const heals = [
-      make(nodes[plan].base, nodes[meter].base, 0.5, 0x00e07a),
-      make(nodes[meter].base, nodes[drift].base, 0.5, 0x00e07a),
-    ];
+    // A low node budget can trim the tail of the layout, so each route is only
+    // built when both of its endpoints were actually drawn.
+    const heals: THREE.Line[] = [];
+    const route = (from: string, to: string) => {
+      const a = index.get(from);
+      const b = index.get(to);
+      if (a === undefined || b === undefined) return;
+      heals.push(make(nodes[a].base, nodes[b].base, 0.5, 0x00e07a));
+    };
+    route("plan", "meter");
+    route("meter", "drift");
 
     return { edgeLines: made, healLines: heals };
   }, [edges, nodes, index]);
@@ -154,8 +175,6 @@ export function SelfHealingDag({
       }
     };
   }, [edgeLines, healLines]);
-
-  const tmp = useMemo(() => new THREE.Vector3(), []);
 
   useFrame((state) => {
     const clock = state.clock.elapsedTime;
@@ -191,8 +210,10 @@ export function SelfHealingDag({
       if (st === "failed") {
         mat.color.set(FAIL);
         // A failed node jitters — instability you can see.
-        mesh.position.x = n.base.x + (Math.random() - 0.5) * 0.08;
-        mesh.position.y = n.base.y + (Math.random() - 0.5) * 0.08;
+        // Deterministic waveforms rather than Math.random(): the frame loop
+        // allocates nothing, and the same fault always looks the same.
+        mesh.position.x = n.base.x + Math.sin(clock * 47.3) * 0.05;
+        mesh.position.y = n.base.y + Math.cos(clock * 41.7) * 0.05;
         mesh.scale.setScalar(n.size * 1.25);
       } else {
         mesh.position.x = THREE.MathUtils.lerp(mesh.position.x, n.base.x, 0.12);
@@ -263,7 +284,6 @@ export function SelfHealingDag({
       g.position.x = THREE.MathUtils.lerp(g.position.x, gx, 0.06);
       g.position.y = THREE.MathUtils.lerp(g.position.y, gy, 0.06);
       g.rotation.y = t * 0.06;
-      void tmp;
     }
   });
 
@@ -300,34 +320,3 @@ export function SelfHealingDag({
     </group>
   );
 }
-
-/** The control surface. Native button, keyboard reachable, with a reset. */
-export function FaultControl({
-  onInject,
-  onReset,
-  active,
-}: {
-  onInject: () => void;
-  onReset: () => void;
-  active: boolean;
-}) {
-  return (
-    <div className="flex flex-wrap items-center gap-3">
-      <button
-        type="button"
-        onClick={onInject}
-        className="btn btn-sm"
-        aria-label="Inject a simulated node failure into the mission graph"
-      >
-        Inject fault
-      </button>
-      {active && (
-        <button type="button" onClick={onReset} className="btn btn-sm btn-ghost">
-          Reset graph
-        </button>
-      )}
-    </div>
-  );
-}
-
-export { verificationLevels };

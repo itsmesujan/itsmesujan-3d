@@ -121,11 +121,9 @@ export function AgentSwarm({
   const tmp = useMemo(() => new THREE.Vector3(), []);
   const tmpTarget = useMemo(() => new THREE.Vector3(), []);
 
-  useFrame((state, delta) => {
+  useFrame((state) => {
     const pts = pointsRef.current;
     if (!pts) return;
-
-    const t = paused ? 0 : delta;
 
     /*
      * Interval shape: establish → resolve → hold.

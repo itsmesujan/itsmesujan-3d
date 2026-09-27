@@ -22,6 +22,21 @@ export const site = {
   email: "hello@itsmesujan.me",
 } as const;
 
+/**
+ * Primary navigation, shared by the header and the footer.
+ *
+ * Targets are hash anchors on the home page — that is where the content
+ * lives. `useNavHref` resolves them from any route, so this array is the one
+ * place a nav item is ever edited.
+ */
+export const nav = [
+  { href: "#work", label: "Work" },
+  { href: "#method", label: "Method" },
+  { href: "#about", label: "About" },
+  { href: "#capabilities", label: "Capabilities" },
+  { href: "#contact", label: "Contact" },
+] as const;
+
 /** The 6-step loop. This is the site's central motif — it recurs in 2D and 3D. */
 export const loopSteps = [
   {
@@ -153,6 +168,23 @@ export const projects: Project[] = [
     accent: "paper",
   },
 ];
+
+/**
+ * Look up a case study by slug.
+ *
+ * Throws rather than returning undefined: this can only fail when a slug used
+ * in code no longer exists in `projects`, and that must break the build
+ * loudly instead of rendering a page with missing content.
+ */
+export function getProject(slug: string): Project {
+  const found = projects.find((p) => p.slug === slug);
+  if (!found) {
+    throw new Error(
+      `No project with slug "${slug}". Valid slugs: ${projects.map((p) => p.slug).join(", ")}`,
+    );
+  }
+  return found;
+}
 
 export const timeline = [
   {

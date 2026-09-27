@@ -62,7 +62,13 @@ export function initialTier(): Tier {
   return "balanced";
 }
 
-/** Per-tier budgets. Real numbers the scenes actually read. */
+/**
+ * Per-tier budgets. Real numbers the scenes actually read.
+ *
+ * Every field here is consumed: `particleCount` by the swarm and the router,
+ * `nodeCount` by the mission graph, `dpr`/`shadows`/`antialias` by the
+ * renderer boundary. Nothing is budgeted that nothing renders.
+ */
 export const TIER_BUDGET: Record<
   Tier,
   {
@@ -70,7 +76,6 @@ export const TIER_BUDGET: Record<
     particleCount: number;
     nodeCount: number;
     shadows: boolean;
-    bloom: boolean;
     antialias: boolean;
   }
 > = {
@@ -79,7 +84,6 @@ export const TIER_BUDGET: Record<
     particleCount: 220,
     nodeCount: 7,
     shadows: false,
-    bloom: false,
     antialias: false,
   },
   balanced: {
@@ -87,7 +91,6 @@ export const TIER_BUDGET: Record<
     particleCount: 520,
     nodeCount: 10,
     shadows: true,
-    bloom: false,
     antialias: true,
   },
   high: {
@@ -95,7 +98,6 @@ export const TIER_BUDGET: Record<
     particleCount: 1100,
     nodeCount: 14,
     shadows: true,
-    bloom: true,
     antialias: true,
   },
 };

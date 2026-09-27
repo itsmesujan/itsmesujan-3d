@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import SceneCanvas from "./SceneCanvas";
 import { useClock, usePerfTier, useReducedMotion } from "@/lib/useClock";
-import { getMotionPrefs, TIER_BUDGET, type Tier } from "@/lib/capability";
+import { getMotionPrefs, initialTier, TIER_BUDGET, type Tier } from "@/lib/capability";
 
 /**
  * The shared host for every scroll-driven 3D section.
@@ -29,9 +29,19 @@ export type SceneContext = {
   pointer: { x: number; y: number };
   /** Particle/packet budget for this tier. */
   count: number;
+  /** Graph-node budget for this tier. */
+  nodes: number;
+  /**
+   * True when 3D is permanently off for this visitor — reduced motion, or a
+   * context that failed. The poster is the whole experience, so controls that
+   * depend on the scene must say so rather than look broken.
+   */
+  off: boolean;
 };
 
 type Props = {
+  /** Anchor target, for in-page navigation to this section. */
+  id?: string;
   /** Static composition. Shown before load, on no-WebGL, and on failure. */
   poster: ReactNode;
   /** 2D overlay. Receives progress so copy can sync with the scene. */
@@ -48,6 +58,7 @@ type Props = {
 };
 
 export default function SceneHost({
+  id,
   poster,
   overlay,
   scene,
@@ -66,6 +77,7 @@ export default function SceneHost({
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [inView, setInView] = useState(false);
+  const [antialias, setAntialias] = useState(false);
 
   const reduced = useReducedMotion();
   const tier = usePerfTier(baseTier);
@@ -81,13 +93,14 @@ export default function SceneHost({
     allowTilt.current = prefs.finePointer && !prefs.reduced;
     setAllowed(!prefs.reduced);
 
-    const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
-    const cores = navigator.hardwareConcurrency ?? 4;
-    let t: Tier = "balanced";
-    if (prefs.coarsePointer) t = "low";
-    else if (typeof mem === "number" && mem <= 4) t = "low";
-    else if (cores >= 8) t = "high";
+    // One implementation of the capability guess, shared with the rest of the
+    // app: WebGL2 availability, memory, cores, pointer type, viewport.
+    const t = initialTier();
     setBaseTier(t);
+
+    // Anti-aliasing is a context-creation option, not a runtime toggle. Latch
+    // the tier's value here — before any canvas exists — and never rewrite it.
+    setAntialias(TIER_BUDGET[t].antialias);
 
     setReady(true);
   }, []);
@@ -152,6 +165,23 @@ export default function SceneHost({
   }, []);
 
   const count = budget ? budget(tier) : TIER_BUDGET[tier].particleCount;
+  const nodes = TIER_BUDGET[tier].nodeCount;
+
+  /*
+   * The canvas mounts once, when the section first comes near view, and then
+   * stays mounted. Off-screen it is switched to `frameloop="never"` rather
+   * than torn down: no frames are spent on invisible pixels, and scrolling
+   * back does not pay for a new renderer, context, shader compile and buffer
+   * upload. `inView` still gates that switch, so the effect is identical.
+   */
+  const showCanvas = allowed && reveal && !failed;
+
+  // True while the canvas is genuinely rendering. Used to gate the frame loop,
+  // not passed on: a scene never needs to know it is merely off-screen.
+  const live = showCanvas && inView && !reduced;
+
+  // Permanently off, as opposed to momentarily paused.
+  const off = ready && (!allowed || failed);
 
   const ctx: SceneContext = {
     progress,
@@ -161,15 +191,14 @@ export default function SceneHost({
     allowTilt: allowTilt.current,
     pointer: pointer.current,
     count,
+    nodes,
+    off,
   };
-
-  // Boot the renderer only once the section is near view, and only when both
-  // WebGL and the motion preference allow it.
-  const showCanvas = allowed && reveal && inView && !failed;
 
   return (
     <section
       ref={sectionRef}
+      id={id}
       aria-label={label}
       className={`relative ${minHeight} ${className}`}
     >
@@ -180,6 +209,8 @@ export default function SceneHost({
             camera={camera}
             maxDpr={TIER_BUDGET[tier].dpr[1]}
             shadows={TIER_BUDGET[tier].shadows}
+            antialias={antialias}
+            frameloop={live ? "always" : "never"}
             onFail={() => setFailed(true)}
           >
             {scene(ctx)}

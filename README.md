@@ -138,7 +138,8 @@ src/
 │
 ├── lib/
 │   ├── capability.ts             # WebGL2 probe, motion prefs, quality tiers, budgets
-│   └── useClock.ts               # One shared rAF clock + reveal/in-view/perf hooks
+│   ├── useClock.ts               # One shared rAF clock + reveal/in-view/perf hooks
+│   └── useNavHref.ts             # Resolves hash nav targets from any route
 │
 └── sections/                     # The seven page beats
     ├── Hero.tsx  FleetSection.tsx  DagSection.tsx  RouterSection.tsx
@@ -152,8 +153,8 @@ src/
 
 ### Component boundaries
 
-- **Server components** (default): `layout`, `page`, `work/[slug]`, `robots`, `sitemap`, `not-found`, `Footer`, `Contact`, and the whole content layer.
-- **Client components** (`"use client"`): anything touching scroll, pointer, WebGL, or form state — `Header`, `ContactForm`, `Hero`, the three 3D sections, and `lib/useClock.ts`.
+- **Server components** (default): `layout`, `page`, `work/[slug]`, `robots`, `sitemap`, `not-found`, `Contact`, and the whole content layer.
+- **Client components** (`"use client"`): anything touching scroll, pointer, WebGL, route-aware links, or form state — `Header`, `Footer`, `ContactForm`, `Hero`, the three 3D sections, and `lib/useClock.ts`.
 - **Dynamic imports** (`ssr: false`): the entire `three` / R3F dependency graph. It is code-split and only ever mounted in the browser once a section is near the viewport.
 
 ---
@@ -173,6 +174,7 @@ Three scenes, each one an argument made visible. Every scene is a thin consumer 
 | `scene` | The 3D contents, receiving a `SceneContext`. |
 | `label` | Section label for assistive technology. |
 | `camera`, `minHeight`, `className` | Composition and scroll travel. |
+| `id` | Anchor target, so in-page navigation can land on the section. |
 | `budget` | Optional override of the per-tier particle/packet count for this specific scene. |
 
 Every consumer receives the same `SceneContext`:
@@ -185,6 +187,8 @@ type SceneContext = {
   allowTilt: boolean;// fine pointer and motion allowed
   pointer: { x: number; y: number }; // -1–1
   count: number;     // particle/packet budget for this tier
+  nodes: number;     // graph-node budget for this tier
+  off: boolean;      // 3D is permanently off — reduced motion, or a failed context
 };
 ```
 
@@ -193,10 +197,12 @@ type SceneContext = {
 A scene only boots when **all** of these are true:
 
 1. `prefers-reduced-motion` is not set.
-2. The section has been revealed and is currently in view (`IntersectionObserver`, `rootMargin: 300px`).
+2. The section has come near the viewport (`IntersectionObserver`, `rootMargin: 300px`).
 3. WebGL initialization has not failed, and the GL context has not been lost.
 
 If any check fails, the poster renders instead and the page stays complete. `SceneCanvas` additionally handles a real, commonly-underestimated failure mode: `webglcontextlost` is caught, `preventDefault()`ed, and the 3D subtree is torn down in favour of the static composition.
+
+A canvas, once mounted, is not thrown away when its section scrolls out of view: the frame loop is switched to `frameloop="never"`, so invisible pixels cost nothing while a return scroll skips renderer creation, context setup, shader compilation and buffer upload. `SceneContext.off` is the separate, permanent case — reduced motion, or a dead context — which an overlay uses to disable the controls that depend on the scene and say why.
 
 ### Quality tiers
 
@@ -208,13 +214,13 @@ If any check fails, the poster renders instead and the page stays complete. `Sce
 
 Per-tier budgets, read by the scenes themselves:
 
-| Tier | DPR range | Particles | Graph nodes | Shadows | Bloom | Antialias |
-|------|-----------|-----------|-------------|---------|-------|-----------|
-| `low` | `1 – 1` | 220 | 7 | no | no | no |
-| `balanced` | `1 – 1.25` | 520 | 10 | yes | no | yes |
-| `high` | `1 – 1.5` | 1100 | 14 | yes | yes | yes |
+| Tier | DPR range | Particles | Graph nodes | Shadows | Antialias |
+|------|-----------|-----------|-------------|---------|-----------|
+| `low` | `1 – 1` | 220 | 7 | no | no |
+| `balanced` | `1 – 1.25` | 520 | 10 | yes | yes |
+| `high` | `1 – 1.5` | 1100 | 14 | yes | yes |
 
-Scenes that need different density override it per section: the fleet swarm runs `300 / 750 / 1400` agents, the router runs `40 / 70 / 120` packets, and the hero swarm is a fixed lightweight `420` (`120` under reduced motion).
+Scenes that need different density override it per section: the fleet swarm runs `300 / 750 / 1400` agents, the router runs `40 / 70 / 120` packets, and the hero swarm is a fixed lightweight `420` (`120` under reduced motion). The mission graph reads `nodeCount` and trims the tail of its layout — the core path, the fault, and the recovery detour survive every tier. `antialias` is latched from the starting tier before the GL context exists, because it is a context-creation option rather than a runtime toggle.
 
 ### The shared clock
 
@@ -228,7 +234,7 @@ This is why the page can host three animated scenes without three competing list
 An undirected swarm that scroll *recruits* into the six stages of the build loop. Each agent carries a deterministic home position (a seeded hash, not `Math.random`, so a reload always shows the same six stages), a target stage, an orbital offset, and a stagger delay. Scroll maps non-linearly: the first fifth establishes, the middle three-fifths resolve, the last fifth holds so the labels are readable. Colour carries meaning — ink while scattered, signal orange as it locks in, brightening on hold. Positions are written straight into a preallocated `Float32Array`; the render loop allocates nothing.
 
 **2. `SelfHealingDag` — Agent-X (`DagSection`)**
-A mission graph laid out in layers left→right, the way a scheduler reads, with 12 nodes and the dependency edges of a real mission. The single visitor control is **Inject fault**: the target node dies, every edge touching it severs in red, and a teal recovery detour fades in around the break. Existing edges then settle into the recovery state. The visitor learns what "self-healing" means by watching it happen, not by reading a caption.
+A mission graph laid out in layers left→right, the way a scheduler reads — 12 nodes at the top tier, trimmed toward the core path on weaker devices — along the dependency edges of a real mission. The single visitor control is **Inject fault**: the target node dies, every edge touching it severs in red, and a teal recovery detour fades in around the break. Existing edges then settle into the recovery state. The button then reads **Replay fault**, with **Reset graph** beside it returning the graph to healthy: the fault state is a prop owned by the section, so a replay restarts from `t=0` with no hidden internal toggle, and each injection is announced in a live region. The visitor learns what "self-healing" means by watching it happen, not by reading a caption.
 
 **3. `ModelRouter` — DevPilot (`RouterSection`)**
 A handset, a local GGUF runtime below it, and a 5-sphere cloud cluster above it (many providers, not one vendor). The slider is a real routing parameter: packets spawn at the device, arc outward, and land on a *different destination* depending on the value, taking the colour of whichever route they fly. Packets are one `InstancedMesh` — a single draw call for the entire stream.
@@ -333,20 +339,21 @@ return { status: "ok", errors: {} };
 - **Skip to content** link, visible on focus, first in the tab order.
 - **Focus is never removed, only restyled** — a 3 px signal-orange `:focus-visible` outline with offset, switching to verification green on dark "void" sections so it always has contrast.
 - **Every section is labelled** (`aria-label` / `aria-labelledby`), and the nav is a real `<nav aria-label="Primary">` with a list.
-- **Native controls everywhere.** The routing slider is an `<input type="range">` with `aria-valuetext` ("60 percent local, 40 percent cloud"), so keyboard support, announcements, and hit area come for free. Fault injection is a real `<button>`.
+- **Native controls everywhere.** The routing slider is an `<input type="range">` with `aria-valuetext` ("60 percent local, 40 percent cloud"), so keyboard support, announcements, and hit area come for free. Fault injection is a real `<button>`, disabled with a visible reason when 3D is off.
 - **Decorative 3D is hidden** — canvases are `aria-hidden="true"` and every scene has a text alternative in the overlay.
 - **Reduced motion is honoured fully** (see above), including at the CSS level for settles and reveals.
 - **Print styles** — a `.no-print` rule hides the header, and the body inverts to black on white.
 - **Mobile menu** locks body scroll while open and closes on `Escape`.
+- **In-page anchors land below the fixed header** — `scroll-padding-top` is driven by a `--header-h` token rather than a magic number, so every jump target clears the bar. Navigation is declared once in `site.ts`: `useNavHref` keeps those targets as native anchors on the home page and rewrites them to `/#…` from any other route, so header and footer cannot drift apart.
 
 ---
 
 ## Performance
 
 - **3D is never in the critical path.** `three` + `@react-three/fiber` + `drei` are dynamically imported with `ssr: false`, and the canvas only mounts when its section nears the viewport.
-- **One rAF loop for the whole page**, started on first subscriber and stopped on the last; it pauses on tab hide. Off-screen scenes are set to `paused`, which freezes continuous drift rather than burning frames on invisible pixels.
+- **One rAF loop for the whole page**, started on first subscriber and stopped on the last; it pauses on tab hide. Off-screen scenes are switched to `frameloop="never"` — and reported to the scene as `paused`, which freezes continuous drift — rather than burning frames on invisible pixels.
 - **Zero allocation per frame.** Preallocated typed arrays, hoisted scratch objects, and instanced meshes (all router packets = one draw call).
-- **DPR is capped and adaptive** per tier, with `AdaptiveDpr` from drei, and `antialias` is disabled at the low tier.
+- **DPR is capped and adaptive** per tier, with `AdaptiveDpr` from drei; `antialias` follows the starting tier and is off at `low`.
 - **Measured geometry.** Section offsets and travel distances are measured on resize and after `document.fonts.ready` — never inside the scroll loop.
 - **Reduced scope for the reveal system.** Render props bail out on <0.001 progress deltas, and stages sync to scroll rather than to a timer.
 
@@ -411,7 +418,7 @@ Listed honestly, because the site's whole premise is that nothing is claimed tha
 
 - **Contact delivery is not wired to a mail provider.** Validation and spam handling are real; delivery is not. A valid message returns `unconfigured` and the UI says so. See [Contact form](#contact-form).
 - **No test suite is committed.** The methodology describes Playwright audits (overflow, tap targets, console errors, menu interaction at 320–1920 px) run against production builds; those live outside this repository.
-- **Bloom is budgeted but not rendered.** `TIER_BUDGET[tier].bloom` is defined and reserved for a post-processing pass; no `EffectComposer` is mounted yet.
+- **Bloom is not implemented, and is no longer budgeted.** `TIER_BUDGET` carries only values something actually renders; a post-processing pass would add its budget back alongside the pass itself.
 - **No ESLint config is committed**, so `pnpm lint` needs one before it will run cleanly.
 - **The `void` scanline treatment and `grid-void` grid are defined** but used sparingly — the shipped page is predominantly on paper.
 

@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import Link from "next/link";
 import SceneHost from "@/components/three/SceneHost";
 import { SelfHealingDag } from "@/components/three/SelfHealingDag";
-import { verificationLevels, type Project } from "@/content/site";
-import { projects } from "@/content/site";
+import { getProject, verificationLevels } from "@/content/site";
 
-const project = projects.find((p) => p.slug === "agent-x") as Project;
+/** Throws at build time if this slug ever leaves the content. */
+const project = getProject("agent-x");
 
 /**
  * SECTION 2 — THE SELF-HEALING DAG (Agent-X)
@@ -18,11 +19,16 @@ const project = projects.find((p) => p.slug === "agent-x") as Project;
  */
 
 export default function DagSection() {
+  /**
+   * How many faults the visitor has injected. The count is both the scene's
+   * React key and its `initialFault` prop, so every injection replays the
+   * sequence from t=0, and 0 renders the graph healthy again.
+   */
   const [faults, setFaults] = useState(0);
 
   const inject = useCallback(() => setFaults((n) => n + 1), []);
+  const reset = useCallback(() => setFaults(0), []);
 
-  /** Remounting the scene replays the fault from t=0. */
   const poster = (
     <div className="absolute inset-0 grid-paper" aria-hidden="true" />
   );
@@ -33,17 +39,18 @@ export default function DagSection() {
       poster={poster}
       minHeight="min-h-[230vh]"
       camera={{ position: [0, 0, 7.6], fov: 44 }}
-      scene={({ progress, paused, allowTilt, pointer, count }) => (
+      scene={({ progress, paused, allowTilt, pointer, nodes }) => (
         <SelfHealingDag
           key={faults}
           progress={progress}
           paused={paused}
           allowTilt={allowTilt}
           pointer={pointer}
-          nodeBudget={count}
+          nodeBudget={nodes}
+          initialFault={faults > 0}
         />
       )}
-      overlay={({ progress }) => (
+      overlay={({ progress, off }) => (
         <div className="grid gap-8 lg:grid-cols-[minmax(0,24rem)_1fr] lg:items-center">
           <div>
             <p className="t-mono mb-4 text-ink/55">02 — Evidence</p>
@@ -62,15 +69,43 @@ export default function DagSection() {
                 Break the busiest node. The scheduler detects the failure and
                 routes around it — no human in the loop.
               </p>
-              <div className="pointer-events-auto mt-4">
+              <div className="pointer-events-auto mt-4 flex flex-wrap items-center gap-3">
                 <button
                   type="button"
                   onClick={inject}
-                  className="btn btn-sm btn-primary w-full sm:w-auto"
+                  disabled={off}
+                  className="btn btn-sm btn-primary w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-45"
                 >
-                  Inject fault
+                  {faults === 0 ? "Inject fault" : "Replay fault"}
                 </button>
+                {faults > 0 && (
+                  <button
+                    type="button"
+                    onClick={reset}
+                    disabled={off}
+                    className="btn btn-sm w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    Reset graph
+                  </button>
+                )}
               </div>
+
+              {/* The fault is a real scene event. When 3D is off entirely —
+                  reduced motion or a failed context — say so rather than let
+                  the control look broken. */}
+              {off && (
+                <p className="mt-3 font-mono text-[0.68rem] uppercase leading-relaxed tracking-[0.06em] text-ink/50">
+                  Live demo needs WebGL and full motion.
+                </p>
+              )}
+
+              {/* Announced, not merely implied. */}
+              {faults > 0 && (
+                <p role="status" className="sr-only">
+                  Fault {faults} injected. The scheduler detected the failure and
+                  rerouted the mission around it.
+                </p>
+              )}
             </div>
           </div>
 
@@ -125,12 +160,12 @@ export default function DagSection() {
               </ul>
             </div>
 
-            <a
+            <Link
               href={`/work/${project.slug}`}
               className="btn btn-sm mt-6 pointer-events-auto"
             >
               Read the case study
-            </a>
+            </Link>
           </div>
         </div>
       )}

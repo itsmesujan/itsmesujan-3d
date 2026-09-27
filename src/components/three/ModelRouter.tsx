@@ -17,7 +17,6 @@ import * as THREE from "three";
  * in one gesture.
  */
 
-const PAPER = new THREE.Color("#f4f1ea");
 const INK = new THREE.Color("#0a0a0a");
 const CLOUD = new THREE.Color("#ff4d1c");
 const LOCAL = new THREE.Color("#00e07a");
@@ -131,9 +130,6 @@ export function ModelRouter({
     if (packets.instanceColor) packets.instanceColor.needsUpdate = true;
     const mat = packets.material as THREE.MeshBasicMaterial;
     mat.opacity = 0.9;
-
-    void PAPER;
-    void INK;
   });
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { initialTier, type Tier, getMotionPrefs } from "./capability";
+import { type Tier, getMotionPrefs } from "./capability";
 
 /**
  * One shared clock for scroll progress, pointer, and page visibility.
