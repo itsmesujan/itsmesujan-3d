@@ -426,8 +426,3 @@ No license file is included: this is a personal portfolio, and all rights are re
 Built by **Majhi Sujan** — specification, orchestration, review, and iteration, with AI agents doing the typing.
 
 [itsmesujan.me](https://www.itsmesujan.me) · [@itsmesujan](https://github.com/itsmesujan/) · [hello@itsmesujan.me](mailto:hello@itsmesujan.me)
-
-
-
-
-
