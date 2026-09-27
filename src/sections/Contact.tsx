@@ -58,20 +58,29 @@ async function submit(_prev: ContactState, formData: FormData): Promise<ContactS
   return { status: "unconfigured", errors: {} };
 }
 
-export default function Contact() {
+type Props = {
+  /** "h1" when this section is the page's primary content. */
+  headingLevel?: "h1" | "h2";
+};
+
+export default function Contact({ headingLevel = "h2" }: Props) {
+  const Heading = headingLevel;
+
   return (
     <section
       id="contact"
       aria-labelledby="contact-heading"
-      className="border-b-[2.5px] border-ink bg-paper py-20 sm:py-28"
+      className={`border-b-[2.5px] border-ink bg-paper pb-20 sm:pb-28 ${
+        headingLevel === "h1" ? "page-top" : "pt-20 sm:pt-28"
+      }`}
     >
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <div className="grid gap-12 lg:grid-cols-[1fr_minmax(0,32rem)]">
           <div>
             <p className="t-mono mb-3 text-ink/55">Contact</p>
-            <h2 id="contact-heading" className="t-section max-w-[14ch]">
+            <Heading id="contact-heading" className="t-section max-w-[14ch]">
               {contact.heading}
-            </h2>
+            </Heading>
             <p className="t-body-lg t-measure mt-6 text-ink/75">{contact.body}</p>
 
             <div className="mt-8 flex flex-wrap gap-3">

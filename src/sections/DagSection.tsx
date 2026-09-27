@@ -18,7 +18,7 @@ const project = getProject("agent-x");
  * demonstrate what "self-healing scheduler" means.
  */
 
-export default function DagSection() {
+export default function DagSection({ embed = false }: { embed?: boolean }) {
   /**
    * How many faults the visitor has injected. The count is both the scene's
    * React key and its `initialFault` prop, so every injection replays the
@@ -115,23 +115,18 @@ export default function DagSection() {
               What shipped
             </p>
             <dl className="mt-4 grid grid-cols-2 gap-x-5 gap-y-5">
-              {[
-                { v: "94.5%", k: "Mission success", note: "vs 42% baseline" },
-                { v: "91.2%", k: "Self-healing recovery", note: "no intervention" },
-                { v: "87.5%", k: "Cost reduction", note: "per mission" },
-                { v: "162/162", k: "Test suite", note: "passing" },
-              ].map((m, i) => {
+              {(project.metrics ?? []).map((m, i) => {
                 const k = Math.min(1, Math.max(0, (progress - 0.35 - i * 0.1) * 7));
                 return (
                   <div
-                    key={m.k}
+                    key={m.label}
                     style={{ opacity: 0.3 + k * 0.7 }}
                   >
                     <dd className="font-display text-3xl font-black leading-none tracking-tight text-signal sm:text-4xl">
-                      {m.v}
+                      {m.value}
                     </dd>
                     <dt className="mt-1.5 font-mono text-[0.68rem] font-bold uppercase tracking-[0.08em] text-ink">
-                      {m.k}
+                      {m.label}
                     </dt>
                     <p className="font-mono text-[0.65rem] uppercase tracking-[0.06em] text-ink/50">
                       {m.note}
@@ -160,12 +155,11 @@ export default function DagSection() {
               </ul>
             </div>
 
-            <Link
-              href={`/work/${project.slug}`}
-              className="btn btn-sm mt-6"
-            >
-              Read the case study
-            </Link>
+            {!embed && (
+              <Link href={`/work/${project.slug}`} className="btn btn-sm mt-6">
+                Read the case study
+              </Link>
+            )}
           </div>
         </div>
       )}

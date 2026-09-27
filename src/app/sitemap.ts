@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { projects, site } from "@/content/site";
+import { pages, projects, site } from "@/content/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -11,6 +11,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 1,
     },
+    // The spoke pages, from the same object their own metadata reads.
+    ...Object.values(pages).map((p) => ({
+      url: `${site.url}${p.path}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.9,
+    })),
     ...projects.map((p) => ({
       url: `${site.url}/work/${p.slug}`,
       lastModified: now,

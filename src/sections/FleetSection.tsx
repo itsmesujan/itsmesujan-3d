@@ -2,14 +2,21 @@
 
 import SceneHost from "@/components/three/SceneHost";
 import { AgentSwarm } from "@/components/three/AgentSwarm";
-import { loopSteps } from "@/content/site";
+import { loopSteps, pages } from "@/content/site";
+
+type Props = {
+  /** "h1" when this section is the page's primary content. */
+  headingLevel?: "h1" | "h2";
+};
 
 /**
  * SECTION 1 — THE AGENT FLEET
  * Scroll: a scattered cloud is recruited into the six stages of the build loop.
  */
 
-export default function FleetSection() {
+export default function FleetSection({ headingLevel = "h2" }: Props) {
+  const Heading = headingLevel;
+
   /** The static composition — a legible 2D version of the same idea. */
   const poster = (
     <div className="absolute inset-0 grid-paper" aria-hidden="true" />
@@ -21,6 +28,7 @@ export default function FleetSection() {
       label="The agent fleet resolving into the six-stage build loop"
       poster={poster}
       minHeight="min-h-[240vh]"
+      className={headingLevel === "h1" ? "page-top" : ""}
       camera={{ position: [0, 0, 6.2], fov: 46 }}
       budget={(tier) => TIER_PARTICLE[tier]}
       scene={({ progress, paused, allowTilt, pointer, count }) => (
@@ -38,14 +46,13 @@ export default function FleetSection() {
             <p className="t-mono mb-4 text-ink/55">
               01 — Method
             </p>
-            <h2 className="t-section max-w-[14ch]">
+            <Heading className="t-section max-w-[14ch]">
               One human.{" "}
               <span className="text-signal">A fleet.</span>
-            </h2>
+            </Heading>
             <p className="t-measure mt-6 text-ink/75">
-              A fleet of agents is undirected by nature — it drifts, duplicates
-              work, and wanders off-goal. The job is not to code faster. The
-              job is to aim it. Scroll to recruit the swarm into the loop.
+              {pages.method.description} Scroll to recruit the swarm into the
+              loop.
             </p>
           </div>
 

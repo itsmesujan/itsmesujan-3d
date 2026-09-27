@@ -18,7 +18,7 @@ const project = getProject("devpilot");
  * app makes on-device, expressed in one gesture.
  */
 
-export default function RouterSection() {
+export default function RouterSection({ embed = false }: { embed?: boolean }) {
   const [route, setRoute] = useState(0.5);
 
   // The slider is the only input; the scene reads it live.
@@ -122,9 +122,11 @@ export default function RouterSection() {
               ))}
             </dl>
 
-            <Link href={`/work/${project.slug}`} className="btn btn-sm mt-6">
-              Read the case study
-            </Link>
+            {!embed && (
+              <Link href={`/work/${project.slug}`} className="btn btn-sm mt-6">
+                Read the case study
+              </Link>
+            )}
           </div>
         </div>
       )}

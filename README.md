@@ -43,19 +43,18 @@ Two ideas drive every decision in this codebase:
 
 Nothing on this page is invented. Every number, project, and claim in `src/content/site.ts` is transcribed from real shipped work.
 
-## The page is the argument
+## The site is the argument
 
-Page order is not decoration — it is the sequence of the pitch. Seven sections, with the three 3D beats deliberately separated by 2D so the page breathes, and the evidence section placed *after* the spectacle so 3D is never asked to do the job of proof.
+The pitch is not one long page. The home page is the **hub** — orientation, then proof — and each subject gets its own **spoke**, where the depth and the matching 3D scene live. Nothing is teased on the hub and then withheld: every claim links to the page that backs it, and every spoke carries a real `<h1>`.
 
-| # | Section | Beat | What it does |
-|---|---------|------|--------------|
-| 1 | `Hero` | Orientation | Who this is. Hard typographic statement + a quiet agent swarm. |
-| 2 | `FleetSection` | **3D — Signature** | A scattered swarm is *recruited* into the six-stage build loop as you scroll. |
-| 3 | `DagSection` | **3D — Evidence** | A mission graph fails on command and repairs itself. Agent-X made visible. |
-| 4 | `RouterSection` | **3D — Mechanism** | Local vs cloud: packets take a different physical path based on your input. DevPilot. |
-| 5 | `Work` | Proof | The shipped work, in numbers. Cards link to full case studies. |
-| 6 | `About` | Credibility | Who is behind it, and the methodology. |
-| 7 | `Contact` | Action | A real form backed by a server action. |
+| Route | Beat | What it does |
+|-------|------|--------------|
+| `/` | Hub — orientation + proof | `Hero` (quiet swarm, the six-stage loop as a 2D rail) then the `Work` grid. |
+| `/method` | **3D — Signature** | `FleetSection`: a scattered swarm is *recruited* into the six-stage build loop as you scroll. This is the one page whose subject *is* the loop. |
+| `/work` | Index | The canonical case-study list, in the detailed variant — stack and tech per project. |
+| `/work/[slug]` | Case studies | `DagSection` (Agent-X) and `RouterSection` (DevPilot) are **embedded in their own case studies**: a mission graph fails on command and repairs itself, and packets take a different physical path based on your input. This site's own case study has no scene — it is its own demo. |
+| `/about` | Credibility | Who is behind it, what they work with, and what is in progress. The nav's `Capabilities` item deep-links to the block inside it. |
+| `/contact` | Action | A real form backed by a server action. |
 
 Three case studies are generated from the same content source: **DevPilot** (Flutter, on-device GGUF models), **Agent-X** (a self-healing agent operating system), and **this site** (the proof that the methodology works on its own author).
 
@@ -114,12 +113,18 @@ There is **no environment configuration required** — the app reads no environm
 src/
 ├── app/                          # App Router — routing, metadata, global styles
 │   ├── layout.tsx                # Fonts, metadata, JSON-LD (Person + WebSite)
-│   ├── page.tsx                  # The single-page argument: 7 sections in order
 │   ├── globals.css               # Design tokens (@theme), utilities, a11y, print
 │   ├── not-found.tsx             # 404 — "Nothing shipped here."
-│   ├── robots.ts                 # Generated robots.txt
-│   ├── sitemap.ts                # Generated sitemap (home + every case study)
-│   └── work/[slug]/page.tsx      # Case studies, statically generated per project
+│   ├── robots.ts                 # Generated robots.txt (sitemap URL derived from site.url)
+│   ├── sitemap.ts                # Generated sitemap (hub + every spoke + every case study)
+│   └── (site)/                   # Everything that wears the site chrome
+│       ├── layout.tsx            # Skip link, Header, <main id="main">, Footer
+│       ├── page.tsx              # The hub — Hero + Work
+│       ├── method/page.tsx       # Spoke — the six-stage loop (fleet scene)
+│       ├── work/page.tsx         # Spoke — the case-study index
+│       ├── work/[slug]/page.tsx  # Case studies, statically generated per project
+│       ├── about/page.tsx        # Spoke — who, capabilities, now
+│       └── contact/page.tsx      # Spoke — the form
 │
 ├── components/
 │   ├── Header.tsx                # Fixed nav, scroll-solid state, Esc-closable sheet
@@ -141,19 +146,19 @@ src/
 │   ├── useClock.ts               # One shared rAF clock + reveal/in-view/perf hooks
 │   └── useNavHref.ts             # Resolves hash nav targets from any route
 │
-└── sections/                     # The seven page beats
-    ├── Hero.tsx  FleetSection.tsx  DagSection.tsx  RouterSection.tsx
-    └── Work.tsx  About.tsx  Contact.tsx
+└── sections/                     # The beats, shared across routes
+    ├── Hero.tsx  Work.tsx  FleetSection.tsx  DagSection.tsx
+    └── RouterSection.tsx  About.tsx  Contact.tsx
 ```
 
 ### The two files that matter most
 
-- **`src/content/site.ts`** — every string, number, project, and capability on the site lives here. Change a metric in one place; the page, the case studies, the sitemap, and the JSON-LD all follow.
+- **`src/content/site.ts`** — every string, number, project, and capability on the site lives here: `nav`, `pages` (each spoke's path, title and description), `loopSteps`, `projects` (including the metrics the Agent-X scene prints), `timeline`, `capabilities`, `now`, `about`, `contact`, and `verificationLevels`. Change a metric in one place; the page, the case studies, the sitemap, and the JSON-LD all follow. A section that renders a page's primary heading takes `headingLevel="h1"`; everything else stays at `h2`.
 - **`src/components/three/SceneHost.tsx`** — the single contract that every 3D section implements. It decides *whether* 3D runs at all, maps the section's own scroll range to `0–1`, owns every listener it creates, and guarantees the static poster stays in the DOM.
 
 ### Component boundaries
 
-- **Server components** (default): `layout`, `page`, `work/[slug]`, `robots`, `sitemap`, `not-found`, `Contact`, and the whole content layer.
+- **Server components** (default): the root `layout`, every page, the `(site)` layout, `robots`, `sitemap`, `not-found`, `Contact`, and the whole content layer.
 - **Client components** (`"use client"`): anything touching scroll, pointer, WebGL, route-aware links, or form state — `Header`, `Footer`, `ContactForm`, `Hero`, the three 3D sections, and `lib/useClock.ts`.
 - **Dynamic imports** (`ssr: false`): the entire `three` / R3F dependency graph. It is code-split and only ever mounted in the browser once a section is near the viewport.
 
@@ -363,8 +368,8 @@ return { status: "ok", errors: {} };
 
 - Full `Metadata` in `app/layout.tsx`: title template, canonical URL, Open Graph, Twitter card, keywords, authors, `robots` with `max-image-preview: large`, and a `category`.
 - **JSON-LD** `@graph` with a `Person` node (job title, `sameAs` GitHub, `knowsAbout`, country address) and a `WebSite` node referencing it by `@id`. Built only from facts present in the content — no ratings, no invented awards.
-- Per-case-study `generateMetadata` with its own canonical and article-type Open Graph tags.
-- `robots.ts` and `sitemap.ts` are generated: the sitemap includes the home page at priority `1` and every case study at `0.8`, derived from the `projects` array rather than hand-maintained.
+- Per-case-study `generateMetadata` with its own canonical and article-type Open Graph tags, and a per-spoke-page canonical + description read from the same `pages` object the page renders.
+- `robots.ts` and `sitemap.ts` are generated: the sitemap carries the hub at priority `1`, every spoke page at `0.9`, and every case study at `0.8` — derived from `pages` and `projects` rather than hand-maintained, and the robots file derives its sitemap URL from `site.url`.
 - `viewport` sets `viewportFit: "cover"` and a light/dark `themeColor` pair so mobile browser chrome matches the page.
 
 ---

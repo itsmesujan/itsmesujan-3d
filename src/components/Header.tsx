@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { nav, site } from "@/content/site";
 import { useNavHref } from "@/lib/useNavHref";
 
@@ -11,6 +12,19 @@ export default function Header() {
   // Hash targets are native in-page anchors here, and real navigations home
   // from any other route. One source, resolved for wherever we are.
   const resolveHref = useNavHref();
+
+  const pathname = usePathname();
+  /*
+   * A nav item claims the active state when its route is being viewed, and a
+   * nested route keeps its parent lit (`/work/agent-x` → Work). Hash-only deep
+   * links like `/about#capabilities` never claim it, because two items pointing
+   * at one page would both light up.
+   */
+  const isActive = (href: string) => {
+    if (href.includes("#")) return false;
+    const path = href.replace(/\/$/, "");
+    return pathname === path || pathname.startsWith(`${path}/`);
+  };
 
   // Lock body scroll while the mobile sheet owns the viewport.
   useEffect(() => {
@@ -63,7 +77,10 @@ export default function Header() {
               <li key={item.href}>
                 <Link
                   href={resolveHref(item.href)}
-                  className="inline-flex items-center px-3 py-2.5 font-mono text-[0.72rem] font-semibold uppercase tracking-[0.1em] no-underline transition-colors hover:bg-ink hover:text-paper"
+                  aria-current={isActive(item.href) ? "page" : undefined}
+                  className={`inline-flex items-center px-3 py-2.5 font-mono text-[0.72rem] font-semibold uppercase tracking-[0.1em] no-underline transition-colors hover:bg-ink hover:text-paper ${
+                    isActive(item.href) ? "bg-ink text-paper" : ""
+                  }`}
                 >
                   {item.label}
                 </Link>
@@ -123,7 +140,10 @@ export default function Header() {
                   <Link
                     href={resolveHref(item.href)}
                     onClick={() => setOpen(false)}
-                    className="block py-4 font-display text-2xl font-black uppercase tracking-tight no-underline"
+                    aria-current={isActive(item.href) ? "page" : undefined}
+                    className={`block py-4 font-display text-2xl font-black uppercase tracking-tight no-underline ${
+                      isActive(item.href) ? "text-signal" : ""
+                    }`}
                   >
                     {item.label}
                   </Link>

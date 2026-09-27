@@ -9,8 +9,14 @@ import { useReveal } from "@/lib/useClock";
  * Presented as a 2D section on paper — deliberately quiet after three loud 3D
  * beats. The contrast is the reason the 3D sections read as events.
  */
-export default function About() {
+type Props = {
+  /** "h1" when this section is the page's primary content. */
+  headingLevel?: "h1" | "h2";
+};
+
+export default function About({ headingLevel = "h2" }: Props) {
   const ref = useReveal<HTMLElement>(0.05);
+  const Heading = headingLevel;
 
   return (
     <>
@@ -18,15 +24,17 @@ export default function About() {
         ref={ref}
         id="about"
         aria-labelledby="about-heading"
-        className="border-b-[2.5px] border-ink bg-paper-dim py-20 sm:py-28"
+        className={`border-b-[2.5px] border-ink bg-paper-dim pb-20 sm:pb-28 ${
+          headingLevel === "h1" ? "page-top" : "pt-20 sm:pt-28"
+        }`}
       >
         <div className="mx-auto max-w-6xl px-5 sm:px-8">
           <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             <div>
               <p className="t-mono mb-3 text-ink/55">About</p>
-              <h2 id="about-heading" className="t-section mb-6">
+              <Heading id="about-heading" className="t-section mb-6">
                 {about.heading}
-              </h2>
+              </Heading>
               <p className="t-body-lg t-measure text-ink/80">{about.body}</p>
               <p className="t-measure mt-5 text-ink/70">{about.second}</p>
 

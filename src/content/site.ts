@@ -25,16 +25,16 @@ export const site = {
 /**
  * Primary navigation, shared by the header and the footer.
  *
- * Targets are hash anchors on the home page — that is where the content
- * lives. `useNavHref` resolves them from any route, so this array is the one
- * place a nav item is ever edited.
+ * Entries are routes, not anchors: the site is a hub with spoke pages, so a
+ * nav label and a URL are the same fact. `useNavHref` still resolves the
+ * hash-only targets (the logo's `#top`) from whichever route is being read.
  */
 export const nav = [
-  { href: "#work", label: "Work" },
-  { href: "#method", label: "Method" },
-  { href: "#about", label: "About" },
-  { href: "#capabilities", label: "Capabilities" },
-  { href: "#contact", label: "Contact" },
+  { href: "/work", label: "Work" },
+  { href: "/method", label: "Method" },
+  { href: "/about", label: "About" },
+  { href: "/about#capabilities", label: "Capabilities" },
+  { href: "/contact", label: "Contact" },
 ] as const;
 
 /** The 6-step loop. This is the site's central motif — it recurs in 2D and 3D. */
@@ -89,6 +89,12 @@ export type Project = {
   challenges: string[];
   iteration: string;
   result: string;
+  /**
+   * The result figures, as the 3D scenes print them. They are the same numbers
+   * that appear in `result`, kept in one place so a page that shows both (the
+   * Agent-X case study carries its interactive graph) cannot contradict itself.
+   */
+  metrics?: { value: string; label: string; note: string }[];
   tech: string[];
   /** Section 2D accent used for the card and its scene tint. */
   accent: "signal" | "verify" | "paper";
@@ -140,6 +146,12 @@ export const projects: Project[] = [
       "The benchmark suite drives the loop: 20 standardized scenarios, injected faults, and drift conditions. Each weakness found (recovery gaps, routing cost spikes) fed back into the kernel design until the numbers held.",
     result:
       "94.5% mission success rate vs 42% single-loop baseline · 91.2% self-healing recovery · 87.5% cost reduction per mission · 162/162 test suite passing · 100% verified-proof rate. Deployed on Cloud Run + Firestore + Pub/Sub, 100% Terraform.",
+    metrics: [
+      { value: "94.5%", label: "Mission success", note: "vs 42% baseline" },
+      { value: "91.2%", label: "Self-healing recovery", note: "no intervention" },
+      { value: "87.5%", label: "Cost reduction", note: "per mission" },
+      { value: "162/162", label: "Test suite", note: "passing" },
+    ],
     tech: ["Python", "Google Cloud Run", "Firestore", "Pub/Sub", "Terraform", "Gemini 2.5 Pro/Flash", "ADK"],
     accent: "signal",
   },
@@ -270,6 +282,38 @@ export const about = {
 export const contact = {
   heading: "Have something worth building?",
   body: "I'm interested in ambitious products, AI-native workflows, and interesting technical problems.",
+} as const;
+
+/**
+ * The spoke pages — everything the hub sends you to.
+ *
+ * Each entry carries the page's own title and the description it renders, so a
+ * `<title>`, a metadata description and a visible paragraph are one string in
+ * one place rather than three that drift.
+ */
+export const pages = {
+  work: {
+    path: "/work",
+    title: "Selected work",
+    description:
+      "Every project below shipped. Numbers are measured, not estimated.",
+  },
+  method: {
+    path: "/method",
+    title: "Method",
+    description:
+      "A fleet of agents is undirected by nature — it drifts, duplicates work, and wanders off-goal. The job is not to code faster. The job is to aim it.",
+  },
+  about: {
+    path: "/about",
+    title: "About",
+    description: about.body,
+  },
+  contact: {
+    path: "/contact",
+    title: "Contact",
+    description: contact.body,
+  },
 } as const;
 
 /** The 4 evidence levels, used as the DAG verification legend. */

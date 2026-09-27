@@ -156,6 +156,12 @@ body[data-menu-open="true"] {
     box-shadow: 8px 8px 0 0 var(--color-ink);
   }
 
+  /* First block of a page that is not the hero: clears the fixed header
+     without a magic number, on top of whatever padding the block wants. */
+  .page-top {
+    padding-top: calc(var(--header-h) + 3rem);
+  }
+
   .brut-void {
     border: var(--border-brut) solid var(--color-paper);
     box-shadow: 6px 6px 0 0 rgba(244, 241, 234, 0.9);

@@ -1,29 +1,40 @@
 "use client";
 
-import { projects } from "@/content/site";
+import Link from "next/link";
+import { pages, projects } from "@/content/site";
 import { useReveal } from "@/lib/useClock";
 
+type Props = {
+  /** "h1" when this section is the page's primary content. */
+  headingLevel?: "h1" | "h2";
+  /** The index adds each project's stack and tech; the hub preview doesn't. */
+  detailed?: boolean;
+};
+
 /** Selected work. Cards link to real case studies, and state the stack. */
-export default function Work() {
+export default function Work({ headingLevel = "h2", detailed = false }: Props) {
   const ref = useReveal<HTMLElement>(0.05);
+  const Heading = headingLevel;
 
   return (
     <section
       ref={ref}
       id="work"
       aria-labelledby="work-heading"
-      className="border-b-[2.5px] border-ink bg-paper py-20 sm:py-28"
+      className={`border-b-[2.5px] border-ink bg-paper pb-20 sm:pb-28 ${
+        headingLevel === "h1" ? "page-top" : "pt-20 sm:pt-28"
+      }`}
     >
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <header className="fade-up mb-12 flex flex-wrap items-end justify-between gap-6">
           <div>
-            <p className="t-mono mb-3 text-ink/55">Selected work</p>
-            <h2 id="work-heading" className="t-section max-w-[16ch]">
+            <p className="t-mono mb-3 text-ink/55">{pages.work.title}</p>
+            <Heading id="work-heading" className="t-section max-w-[16ch]">
               Proof over claims.
-            </h2>
+            </Heading>
           </div>
           <p className="t-measure max-w-xs text-[0.92rem] text-ink/65">
-            Every project below shipped. Numbers are measured, not estimated.
+            {pages.work.description}
           </p>
         </header>
 
@@ -56,12 +67,22 @@ export default function Work() {
                   {p.stack}
                 </p>
 
-                <a
+                {detailed && (
+                  <ul className="mt-4 flex flex-wrap gap-1.5">
+                    {p.tech.map((t) => (
+                      <li key={t} className="chip border-ink/25 text-ink/65">
+                        {t}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <Link
                   href={`/work/${p.slug}`}
                   className="mt-5 inline-flex items-center gap-2 border-2 border-ink px-4 py-3 font-mono text-[0.72rem] font-bold uppercase tracking-[0.1em] no-underline transition-colors hover:bg-ink hover:text-paper"
                 >
                   Case study <span aria-hidden="true">→</span>
-                </a>
+                </Link>
               </article>
             </li>
           ))}
