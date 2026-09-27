@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { site, loopSteps } from "@/content/site";
 import { useClock, useReducedMotion } from "@/lib/useClock";
-import { getMotionPrefs } from "@/lib/capability";
+import { getMotionPrefs, initialTier, TIER_BUDGET } from "@/lib/capability";
 
 /**
  * The hero.
@@ -39,22 +39,45 @@ export default function Hero() {
   const ref = useRef<HTMLElement>(null);
   const [mounted, setMounted] = useState(false);
   const [canRender, setCanRender] = useState(false);
+  const [maxDpr, setMaxDpr] = useState(1);
+  const [inView, setInView] = useState(true);
   const reduced = useReducedMotion();
 
   useEffect(() => {
     const prefs = getMotionPrefs();
     setCanRender(!prefs.reduced);
+    // The hero swarm is the one scene outside SceneHost, but it still reads the
+    // shared tier table rather than a second copy of the same device guess.
+    setMaxDpr(TIER_BUDGET[initialTier()].dpr[1]);
     // Defer mount so first paint is never blocked by the 3D chunk.
     const id = window.requestAnimationFrame(() => setMounted(true));
     return () => window.cancelAnimationFrame(id);
   }, []);
 
-  // Parallax: the headline drifts up slightly slower than the page.
+  // The swarm sleeps once the hero leaves the viewport.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), {
+      threshold: 0,
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  /*
+   * Parallax: the copy drifts up slightly slower than the page. Bounded at
+   * ~40px, and written only when the rounded value actually changes — a style
+   * write per frame for an unchanged value is work the browser still has to
+   * invalidate.
+   */
+  const driftRef = useRef(0);
   useClock((s) => {
     const el = ref.current;
     if (!el || reduced) return;
-    // Subtle and bounded — never more than ~40px of travel.
-    const drift = Math.min(1, s.scroll * 6) * 40;
+    const drift = Math.round(Math.min(1, s.scroll * 6) * 40 * 2) / 2;
+    if (drift === driftRef.current) return;
+    driftRef.current = drift;
     el.style.setProperty("--hero-drift", `${drift}px`);
   });
 
@@ -69,11 +92,14 @@ export default function Hero() {
       {/* Swarm layer — enhancement only. */}
       {mounted && canRender && (
         <div className="absolute inset-0" aria-hidden="true">
-          <HeroScene reduced={reduced} />
+          <HeroScene reduced={reduced} active={inView} maxDpr={maxDpr} />
         </div>
       )}
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-5 pt-28 pb-16 sm:px-8">
+      <div
+        className="relative z-10 mx-auto w-full max-w-6xl px-5 pt-28 pb-16 sm:px-8"
+        style={{ transform: "translateY(var(--hero-drift, 0px))" }}
+      >
         <p className="t-mono mb-6 flex flex-wrap items-center gap-x-3 gap-y-2 text-ink/60">
           <span className="chip chip-signal">{site.role}</span>
           <span>{site.location}</span>

@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import SceneHost from "@/components/three/SceneHost";
 import { ModelRouter } from "@/components/three/ModelRouter";
-import { projects, type Project } from "@/content/site";
+import { getProject } from "@/content/site";
 
-const project = projects.find((p) => p.slug === "devpilot") as Project;
+/** Throws at build time if this slug ever leaves the content. */
+const project = getProject("devpilot");
 
 /**
  * SECTION 3 — THE MODEL ROUTER (DevPilot)
@@ -61,7 +63,7 @@ export default function RouterSection() {
           </div>
 
           {/* The control surface. Native range input = free keyboard support. */}
-          <div className="brut bg-paper/92 p-5 backdrop-blur-sm sm:p-6">
+          <div className="brut bg-paper/95 p-5 md:backdrop-blur-sm sm:p-6">
             <div className="flex items-baseline justify-between gap-3">
               <label
                 htmlFor="route-slider"
@@ -74,7 +76,7 @@ export default function RouterSection() {
               </span>
             </div>
 
-            <div className="pointer-events-auto mt-4">
+            <div className="mt-4">
               <input
                 id="route-slider"
                 type="range"
@@ -120,9 +122,9 @@ export default function RouterSection() {
               ))}
             </dl>
 
-            <a href={`/work/${project.slug}`} className="btn btn-sm mt-6 pointer-events-auto">
+            <Link href={`/work/${project.slug}`} className="btn btn-sm mt-6">
               Read the case study
-            </a>
+            </Link>
           </div>
         </div>
       )}

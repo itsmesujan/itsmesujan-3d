@@ -49,7 +49,7 @@ Page order is not decoration — it is the sequence of the pitch. Seven sections
 
 | # | Section | Beat | What it does |
 |---|---------|------|--------------|
-| 1 | `Hero` | Orientation | Who this is. Hard typographic statement + a quiet always-on agent swarm. |
+| 1 | `Hero` | Orientation | Who this is. Hard typographic statement + a quiet agent swarm. |
 | 2 | `FleetSection` | **3D — Signature** | A scattered swarm is *recruited* into the six-stage build loop as you scroll. |
 | 3 | `DagSection` | **3D — Evidence** | A mission graph fails on command and repairs itself. Agent-X made visible. |
 | 4 | `RouterSection` | **3D — Mechanism** | Local vs cloud: packets take a different physical path based on your input. DevPilot. |
@@ -128,7 +128,7 @@ src/
 │   └── three/                    # The 3D layer
 │       ├── SceneHost.tsx         # ★ The shared host: capability, geometry, progress
 │       ├── SceneCanvas.tsx       # Renderer boundary: code-split, error, context-loss
-│       ├── HeroScene.tsx         # Quiet hero swarm (lightweight, always-on)
+│       ├── HeroScene.tsx         # Quiet hero swarm (lightweight; sleeps off-screen)
 │       ├── AgentSwarm.tsx        # Scene 1 — scatter → ring (the six-stage loop)
 │       ├── SelfHealingDag.tsx    # Scene 2 — fault injection + recovery detour
 │       └── ModelRouter.tsx       # Scene 3 — local ⇄ cloud packet routing
@@ -220,7 +220,7 @@ Per-tier budgets, read by the scenes themselves:
 | `balanced` | `1 – 1.25` | 520 | 10 | yes | yes |
 | `high` | `1 – 1.5` | 1100 | 14 | yes | yes |
 
-Scenes that need different density override it per section: the fleet swarm runs `300 / 750 / 1400` agents, the router runs `40 / 70 / 120` packets, and the hero swarm is a fixed lightweight `420` (`120` under reduced motion). The mission graph reads `nodeCount` and trims the tail of its layout — the core path, the fault, and the recovery detour survive every tier. `antialias` is latched from the starting tier before the GL context exists, because it is a context-creation option rather than a runtime toggle.
+Scenes that need different density override it per section: the fleet swarm runs `300 / 750 / 1400` agents, the router runs `40 / 70 / 120` packets, and the hero swarm is a fixed lightweight `420` (`120` under reduced motion) — it renders outside `SceneHost` but still takes its DPR cap from the same table. The mission graph reads `nodeCount` and trims the tail of its layout — the core path, the fault, and the recovery detour survive every tier. `antialias` is latched from the starting tier before the GL context exists, because it is a context-creation option rather than a runtime toggle.
 
 ### The shared clock
 
@@ -340,7 +340,7 @@ return { status: "ok", errors: {} };
 - **Focus is never removed, only restyled** — a 3 px signal-orange `:focus-visible` outline with offset, switching to verification green on dark "void" sections so it always has contrast.
 - **Every section is labelled** (`aria-label` / `aria-labelledby`), and the nav is a real `<nav aria-label="Primary">` with a list.
 - **Native controls everywhere.** The routing slider is an `<input type="range">` with `aria-valuetext` ("60 percent local, 40 percent cloud"), so keyboard support, announcements, and hit area come for free. Fault injection is a real `<button>`, disabled with a visible reason when 3D is off.
-- **Decorative 3D is hidden** — canvases are `aria-hidden="true"` and every scene has a text alternative in the overlay.
+- **Decorative 3D is hidden** — canvases are `aria-hidden="true"` and every scene has a text alternative in the overlay. The overlay copy itself is ordinary selectable text: the scene layer is transparent to pointer events everywhere except the controls, so nothing stops you copying a sentence.
 - **Reduced motion is honoured fully** (see above), including at the CSS level for settles and reveals.
 - **Print styles** — a `.no-print` rule hides the header, and the body inverts to black on white.
 - **Mobile menu** locks body scroll while open and closes on `Escape`.

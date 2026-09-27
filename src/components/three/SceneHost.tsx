@@ -219,9 +219,16 @@ export default function SceneHost({
           <div className="absolute inset-0">{poster}</div>
         )}
 
-        {/* 2D content always sits above the scene and is never occluded. */}
+        {/*
+         * 2D content always sits above the scene and is never occluded. The
+         * container is transparent to pointer events — nothing invisible should
+         * swallow a click — while the content block is treated as real content:
+         * selectable, copyable, interactive. No scene reads canvas-local
+         * pointer events (tilt comes from the shared clock), so this costs the
+         * 3D nothing.
+         */}
         <div className="pointer-events-none relative z-10 flex h-full items-center">
-          <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
+          <div className="pointer-events-auto mx-auto w-full max-w-6xl select-text px-5 sm:px-8">
             {overlay({ ...ctx, reveal })}
           </div>
         </div>

@@ -4,7 +4,6 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import SceneCanvas from "./SceneCanvas";
-import { TIER_BUDGET, type Tier } from "@/lib/capability";
 
 /**
  * Hero swarm — a quiet, always-on field of agents.
@@ -101,13 +100,24 @@ function Swarm({ count, reduced }: { count: number; reduced: boolean }) {
   );
 }
 
-export function HeroSceneInner({ reduced }: { reduced: boolean }) {
+export function HeroSceneInner({
+  reduced,
+  active,
+  maxDpr,
+}: {
+  reduced: boolean;
+  active: boolean;
+  maxDpr: number;
+}) {
   const count = reduced ? 120 : 420;
   return (
     <SceneCanvas
       fallback={null}
       camera={{ position: [0, 0, 7], fov: 50 }}
-      maxDpr={1.25}
+      maxDpr={maxDpr}
+      // Off-screen the swarm stops rather than unmounts: coming back up the
+      // page costs no renderer, context, or buffer rebuild.
+      frameloop={active && !reduced ? "always" : "never"}
     >
       <Swarm count={count} reduced={reduced} />
     </SceneCanvas>

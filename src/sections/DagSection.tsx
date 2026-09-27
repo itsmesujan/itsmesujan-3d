@@ -61,7 +61,7 @@ export default function DagSection() {
               {project.summary}
             </p>
 
-            <div className="brut mt-7 bg-paper/92 p-4 backdrop-blur-sm">
+            <div className="brut mt-7 bg-paper/95 p-4 md:backdrop-blur-sm">
               <p className="font-mono text-[0.7rem] font-bold uppercase tracking-[0.12em] text-ink/55">
                 Try it
               </p>
@@ -69,7 +69,7 @@ export default function DagSection() {
                 Break the busiest node. The scheduler detects the failure and
                 routes around it — no human in the loop.
               </p>
-              <div className="pointer-events-auto mt-4 flex flex-wrap items-center gap-3">
+              <div className="mt-4 flex flex-wrap items-center gap-3">
                 <button
                   type="button"
                   onClick={inject}
@@ -110,7 +110,7 @@ export default function DagSection() {
           </div>
 
           {/* The result metrics, revealed as the graph resolves. */}
-          <div className="brut bg-paper/92 p-5 backdrop-blur-sm sm:p-6">
+          <div className="brut bg-paper/95 p-5 md:backdrop-blur-sm sm:p-6">
             <p className="font-mono text-[0.7rem] font-bold uppercase tracking-[0.12em] text-ink/55">
               What shipped
             </p>
@@ -162,7 +162,7 @@ export default function DagSection() {
 
             <Link
               href={`/work/${project.slug}`}
-              className="btn btn-sm mt-6 pointer-events-auto"
+              className="btn btn-sm mt-6"
             >
               Read the case study
             </Link>

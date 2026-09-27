@@ -50,7 +50,7 @@ export default function FleetSection() {
           </div>
 
           {/* The six stages, revealed in sync with the resolve. */}
-          <ol className="brut-lg bg-paper/92 p-5 backdrop-blur-sm sm:p-6">
+          <ol className="brut-lg bg-paper/95 p-5 md:backdrop-blur-sm sm:p-6">
             {loopSteps.map((s, i) => {
               // Each stage lights as the ring reaches it.
               const stageProgress = Math.min(
